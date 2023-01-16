@@ -1,15 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES6",
     "useDefineForClassFields": true,
-    "module": "ESNext",
+    "module": "ES6",
     "moduleResolution": "Node",
     "strict": true,
     "sourceMap": true,
-    "lib": [
-      "dom",
-      "ESNext"
-    ],
+    "lib": ["dom", "ES6"],
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
@@ -18,7 +15,5 @@
     "noUnusedParameters": false,
     "noImplicitReturns": true
   },
-  "include": [
-    "./src", "vite.config.js",
-  ]
+  "include": ["./src", "vite.config.js"]
 }
