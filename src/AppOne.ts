@@ -12,7 +12,18 @@ import "@babylonjs/inspector";
 
 import { CharacterController } from "./cc";
 import { Mesh } from "@babylonjs/core/";
-import { AbstractMesh, AnimationGroup } from "@babylonjs/core/";
+import {
+    AbstractMesh,
+    AnimationGroup,
+    FilesInput,
+    AssetsManager,
+    MeshAssetTask,
+} from "@babylonjs/core/";
+
+interface ILoadedModels {
+    name?: string;
+    meshes?: any;
+}
 
 export class AppOne {
     engine: Engine;
@@ -35,18 +46,32 @@ export class AppOne {
     }
 
     run() {
-        this.debug(true);
+        this.debug(false);
         this.engine.runRenderLoop(() => {
             this.scene.render();
         });
     }
 }
 
+let fileInput = document.getElementById("loadFile");
+if (!fileInput) {
+    fileInput = document.createElement("INPUT");
+    fileInput.setAttribute("id", "loadFile");
+    fileInput.setAttribute("type", "file");
+    fileInput.style.position = "absolute";
+    fileInput.style.top = "90px";
+    fileInput.style.width = "300px";
+    fileInput.style.height = "40px";
+    fileInput.style.right = "40px";
+    fileInput.className = "form-control form-control-sm btn-success";
+    document.body.appendChild(fileInput);
+}
+
 var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
     // this is the default code from the playground:
 
     // This creates a basic Babylon Scene object (non-mesh)
-    var scene = new Scene(engine);
+    const scene = new Scene(engine);
 
     // This creates and positions a free camera (non-mesh)
     const camera = new ArcRotateCamera(
@@ -97,6 +122,7 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
         scene,
         (meshes, particleSystems, skeletons, aniGroups) => {
             var player = meshes[0];
+            player.name = "Avatar";
 
             console.log(aniGroups);
             aniGroups.forEach((a) => a.stop());
@@ -139,7 +165,7 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
             // how close can the camera come to player
             camera.lowerRadiusLimit = 2;
             // how far can the camera go from the player
-            camera.upperRadiusLimit = 20;
+            camera.upperRadiusLimit = 5;
             camera.attachControl(canvas, false);
 
             var agMap = createAGmap(aniGroups);
@@ -157,30 +183,12 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
             cc.setCameraTarget(new Vector3(0, 2, 0));
 
             //if the camera comes close to the player then we want cc to enter first person mode.
-            cc.setNoFirstPerson(true);
+            cc.setNoFirstPerson(false);
             //the height of steps which the player can climb
             cc.setStepOffset(0.4);
             //the minimum and maximum slope the player can go up
             //between the two the player will start sliding down if it stops
             cc.setSlopeLimit(30, 60);
-
-            //tell controller
-            // - which animation range/ animation group should be used for which player animation
-            // - rate at which to play that animation range
-            // - wether the animation range should be looped
-            //use this if name, rate or looping is different from default
-            //set a parm to null if you donot want to change that
-            /*
-            cc.setIdleAnim(null, 1, true);
-            cc.setTurnLeftAnim(null, 0.5, true);
-            cc.setTurnRightAnim(null, 0.5, true);
-            cc.setWalkAnim(agMap["walk"], 1, true);
-            cc.setWalkBackAnim(null, 0.5, true);
-            cc.setIdleJumpAnim(null, 0.5, false);
-            cc.setRunJumpAnim(null, 0.6, false);
-            cc.setFallAnim(null, 2, false);
-            cc.setSlideBackAnim(null, 1, false);
-*/
 
             resetAnimations(aniGroups, cc);
 
@@ -197,6 +205,12 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
         }
     );
 
+    /*
+    scene.onPointerDown = (evt) => {
+        scene.getEngine().enterPointerlock();
+    };
+    */
+
     SceneLoader.ImportMesh(
         "",
         "",
@@ -210,6 +224,85 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
             });
         }
     );
+
+    let assetsManager = new AssetsManager(scene);
+
+    let mesh;
+    let modelsArray: any = [];
+    let book: ILoadedModels = {};
+    let allLoadedArray: any = [];
+
+    //called when a single task has been sucessfull
+    assetsManager.onTaskSuccessObservable.add(function (task) {
+        console.log(task);
+        mesh = (task as unknown as MeshAssetTask).loadedMeshes[0]; //will hold the mesh that has been loaded recently\
+        mesh.name = task.name;
+        console.log("task successful", task);
+        (task as unknown as MeshAssetTask).loadedMeshes.forEach((element) => {
+            element.checkCollisions = true;
+            console.log(task.name);
+
+            modelsArray.push(element);
+            console.log(modelsArray);
+            book = {
+                name: task.name,
+                meshes: modelsArray,
+            };
+        });
+        console.log(book);
+        allLoadedArray.push(book);
+        console.log(allLoadedArray);
+        let allLoadedNames: any = [];
+
+        allLoadedArray.forEach((element: any) => {
+            console.log("element.name", element.name);
+            allLoadedNames.push(element.name);
+        });
+
+        document.getElementById("allLoaded")!.innerHTML = allLoadedNames;
+    });
+
+    assetsManager.onTaskErrorObservable.add(function (task) {
+        console.log(
+            "task failed",
+            task.errorObject.message,
+            task.errorObject.exception
+        );
+    });
+
+    var loadButton = document.getElementById("loadFile");
+
+    loadButton!.onchange = function (evt) {
+        let files: any = evt.target!.files;
+        let filename = files[0].name;
+        let blob = new Blob([files[0]]);
+
+        FilesInput.FilesToLoad[filename.toLowerCase()] = blob as File;
+
+        assetsManager.addMeshTask(filename, "", "file:", filename);
+        assetsManager.load();
+    };
+    //
+    /*
+    var filesInput = new FilesInput(
+        engine,
+        scene,
+        sceneLoaded,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    );
+
+    filesInput.monitorElementForDragNDrop(canvas);
+
+    function sceneLoaded(sceneFile: any, babylonScene: any) {
+        let currentScene = babylonScene;
+        currentScene.createDefaultCameraOrLight(true, true, true);
+    }
+    */
 
     return scene;
 };
