@@ -18,6 +18,8 @@ import {
     FilesInput,
     AssetsManager,
     MeshAssetTask,
+    DefaultRenderingPipeline,
+    CubeTexture,
 } from "@babylonjs/core/";
 
 interface ILoadedModels {
@@ -73,6 +75,13 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
     // This creates a basic Babylon Scene object (non-mesh)
     const scene = new Scene(engine);
 
+    var hdrTexture = new CubeTexture(
+        "https://playground.babylonjs.com/textures/environment.env",
+        scene
+    );
+    hdrTexture.gammaSpace = false;
+    scene.environmentTexture = hdrTexture;
+
     // This creates and positions a free camera (non-mesh)
     const camera = new ArcRotateCamera(
         "camera",
@@ -84,7 +93,8 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
     );
 
     // This targets the camera to scene origin
-    camera.setTarget(Vector3.Zero());
+    //   camera.setTarget(Vector3.Zero());
+    camera.minZ = 0.1;
 
     // This attaches the camera to the canvas
     //  camera.attachControl(canvas, true);
@@ -93,7 +103,18 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
     var light = new HemisphericLight("light", new Vector3(0, 1, 0), scene);
 
     // Default intensity is 1. Let's dim the light a small amount
-    light.intensity = 0.7;
+    light.intensity = 0.3;
+
+    /*
+    var pipeline = new DefaultRenderingPipeline(
+        "defaultPipeline", // The name of the pipeline
+        true, // Do you want the pipeline to use HDR texture?
+        scene, // The scene instance
+        [camera] // The list of cameras to be attached to
+    );
+
+    pipeline.samples = 4;
+    */
     /*
     // Our built-in 'sphere' shape.
     var sphere = MeshBuilder.CreateSphere(
@@ -163,9 +184,9 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
             camera.wheelPrecision = 15;
             camera.checkCollisions = false;
             // how close can the camera come to player
-            camera.lowerRadiusLimit = 2;
+            camera.lowerRadiusLimit = 1;
             // how far can the camera go from the player
-            camera.upperRadiusLimit = 5;
+            camera.upperRadiusLimit = 9;
             camera.attachControl(canvas, false);
 
             var agMap = createAGmap(aniGroups);
@@ -202,6 +223,18 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
 
             cc.start();
             //
+            console.log(cc);
+
+            document!.getElementById("tp")!.onclick = function (e) {
+                cc.setMode(0);
+                console.log("tp", cc);
+                canvas.focus();
+            };
+            document!.getElementById("td")!.onclick = function (e) {
+                cc.setMode(1);
+                console.log("td", cc);
+                canvas.focus();
+            };
         }
     );
 
@@ -231,6 +264,7 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
     let modelsArray: any = [];
     let book: ILoadedModels = {};
     let allLoadedArray: any = [];
+    let allLoadedNames: any = [];
 
     //called when a single task has been sucessfull
     assetsManager.onTaskSuccessObservable.add(function (task) {
@@ -252,14 +286,16 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
         console.log(book);
         allLoadedArray.push(book);
         console.log(allLoadedArray);
-        let allLoadedNames: any = [];
 
         allLoadedArray.forEach((element: any) => {
             console.log("element.name", element.name);
-            allLoadedNames.push(element.name);
+            allLoadedNames.push("<div>" + element.name + "</div>");
         });
 
-        document.getElementById("allLoaded")!.innerHTML = allLoadedNames;
+        document.getElementById("allLoaded")!.innerHTML = "";
+        allLoadedNames.forEach((n: any) => {
+            document.getElementById("allLoaded")!.innerHTML += n;
+        });
     });
 
     assetsManager.onTaskErrorObservable.add(function (task) {
@@ -303,6 +339,20 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
         currentScene.createDefaultCameraOrLight(true, true, true);
     }
     */
+
+    document.getElementById("bottomButton")!.onclick = function (e) {
+        console.log("SDFSDF SDF SDF! ! ! ! ", allLoadedArray);
+        allLoadedArray.map((element: any) => {
+            console.log(element);
+
+            if (element.meshes[0]) {
+                element.meshes[0].dispose();
+                element.meshes = [];
+
+                document.getElementById("allLoaded")!.innerHTML = "";
+            }
+        });
+    };
 
     return scene;
 };
