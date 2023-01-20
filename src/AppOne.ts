@@ -10,6 +10,9 @@ import { MeshAssetTask, FilesInput, AssetsManager } from "@babylonjs/core";
 
 import "@babylonjs/loaders/glTF";
 import "@babylonjs/inspector";
+
+import { NiceLoader } from "./NiceLoader";
+
 export class AppOne {
     engine: Engine;
     scene: Scene;
@@ -42,23 +45,7 @@ export class AppOne {
     }
 }
 
-let fileInput = document.getElementById("loadFile");
-if (!fileInput) {
-    fileInput = document.createElement("INPUT");
-    fileInput.setAttribute("id", "loadFile");
-    fileInput.setAttribute("type", "file");
-    fileInput.style.position = "absolute";
-    fileInput.style.top = "90px";
-    fileInput.style.width = "300px";
-    fileInput.style.height = "40px";
-    fileInput.style.right = "40px";
-    fileInput.className = "form-control form-control-sm btn-success";
-    document.body.appendChild(fileInput);
-}
-
 var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
-    // this is the default code from the playground:
-
     // This creates a basic Babylon Scene object (non-mesh)
     var scene = new Scene(engine);
 
@@ -91,6 +78,11 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
         scene
     );
 
+    let modelsArray: any = [];
+
+    NiceLoader(scene, modelsArray);
+
+    /*
     let assetsManager = new AssetsManager(scene);
 
     let mesh;
@@ -107,7 +99,6 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
         });
         modelsArray.push(task);
         console.log(modelsArray);
-        populateList(modelsArray);
     });
 
     assetsManager.onTaskErrorObservable.add(function (task) {
@@ -135,49 +126,13 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
         console.log("SDFSDF SDF SDF! ! ! ! ", modelsArray);
         modelsArray.forEach((element: any) => {
             console.log("ma ma");
-            element.loadedMeshes[0].dispose();
+            element.loadedMeshes[0].dispose(false, true);
         });
         modelsArray = [];
         const section = document.getElementById("allLoaded");
         section!.innerHTML = "";
     };
+    */
     //
     return scene;
 };
-
-function populateList(array: []) {
-    console.log(array);
-    const section = document.getElementById("allLoaded");
-    section!.innerHTML = "";
-    array.forEach((element) => {
-        section!.innerHTML += "<div class='btn arr'>" + (element as any).name;
-        section!.innerHTML +=
-            "<button id=" + (element as any).name + ">TEXT" + "</button>";
-        section!.innerHTML += "</div>";
-        document.getElementById((element as any).name)!.onclick = function (e) {
-            console.log("wer wer wer wer", (element as any).name);
-            deleteModel((element as any).name, array);
-        };
-    });
-}
-
-function deleteModel(name: string, arr: Array<any>) {
-    console.log(arr);
-
-    arr.forEach((item) => {
-        console.log(item.name);
-        if (item.name === name) {
-            console.log("OKOKOKOK!!");
-            item.loadedMeshes[0].dispose();
-        }
-    });
-    /*
-    let el = arr.find((element) => {
-        element.name === name;
-        console.log(name);
-    });
-    console.log(el);
-*/
-    // element.loadedMeshes[0].dispose();
-    console.log("DELETED");
-}
