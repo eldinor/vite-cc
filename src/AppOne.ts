@@ -5,8 +5,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Tools } from "@babylonjs/core/Misc/tools";
 import { HemisphericLight } from "@babylonjs/core/Lights";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
-import { MeshAssetTask, FilesInput, AssetsManager } from "@babylonjs/core";
+import { createScene } from "./CreateScene";
 
 import "@babylonjs/loaders/glTF";
 import "@babylonjs/inspector";
@@ -38,18 +37,16 @@ export class AppOne {
     }
 
     run() {
-        this.debug(true);
+        this.debug(false);
         this.engine.runRenderLoop(() => {
             this.scene.render();
         });
     }
 }
+/*
+function createScene(engine: Engine, canvas: HTMLCanvasElement) {
+    const scene = new Scene(engine);
 
-var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
-    // This creates a basic Babylon Scene object (non-mesh)
-    var scene = new Scene(engine);
-
-    // This creates and positions a free camera (non-mesh)
     const camera = new ArcRotateCamera(
         "camera",
         Tools.ToRadians(90),
@@ -59,80 +56,16 @@ var createScene = function (engine: Engine, canvas: HTMLCanvasElement) {
         scene
     );
 
-    // This targets the camera to scene origin
     camera.setTarget(Vector3.Zero());
-
-    // This attaches the camera to the canvas
     camera.attachControl(canvas, true);
 
-    // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-    var light = new HemisphericLight("light", new Vector3(0, 1, 0), scene);
-
-    // Default intensity is 1. Let's dim the light a small amount
+    const light = new HemisphericLight("light", new Vector3(0, 1, 0), scene);
     light.intensity = 0.7;
 
-    // Our built-in 'ground' shape.
-    var ground = MeshBuilder.CreateGround(
-        "ground",
-        { width: 100, height: 100 },
-        scene
-    );
+    const modelsArray: any = [];
 
-    let modelsArray: any = [];
+    new NiceLoader(scene, modelsArray);
 
-    NiceLoader(scene, modelsArray);
-
-    /*
-    let assetsManager = new AssetsManager(scene);
-
-    let mesh;
-    let modelsArray: any = [];
-
-    //called when a single task has been successfull
-    assetsManager.onTaskSuccessObservable.add(function (task) {
-        console.log(task);
-        mesh = (task as unknown as MeshAssetTask).loadedMeshes[0]; //will hold the mesh that has been loaded recently\
-        mesh.name = task.name;
-        console.log("task successful", task);
-        (task as unknown as MeshAssetTask).loadedMeshes.forEach((element) => {
-            element.checkCollisions = true;
-        });
-        modelsArray.push(task);
-        console.log(modelsArray);
-    });
-
-    assetsManager.onTaskErrorObservable.add(function (task) {
-        console.log(
-            "task failed",
-            task.errorObject.message,
-            task.errorObject.exception
-        );
-    });
-
-    var loadButton = document.getElementById("loadFile");
-
-    loadButton!.onchange = function (evt) {
-        let files: any = evt.target!.files;
-        let filename = files[0].name;
-        let blob = new Blob([files[0]]);
-
-        FilesInput.FilesToLoad[filename.toLowerCase()] = blob as File;
-
-        assetsManager.addMeshTask(filename, "", "file:", filename);
-        assetsManager.load();
-    };
-    //
-    document.getElementById("bottomButton")!.onclick = function (e) {
-        console.log("SDFSDF SDF SDF! ! ! ! ", modelsArray);
-        modelsArray.forEach((element: any) => {
-            console.log("ma ma");
-            element.loadedMeshes[0].dispose(false, true);
-        });
-        modelsArray = [];
-        const section = document.getElementById("allLoaded");
-        section!.innerHTML = "";
-    };
-    */
-    //
     return scene;
-};
+}
+*/
