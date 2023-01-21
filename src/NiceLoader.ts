@@ -4,16 +4,20 @@ import {
     MeshAssetTask,
     Scene,
 } from "@babylonjs/core";
+import { GLTF2Export } from "@babylonjs/serializers/glTF";
+import { Observable } from "babylonjs";
 
 export class NiceLoader {
     scene: Scene;
-    arr: Array<{}>;
-    constructor(scene: Scene, arr: Array<{}>) {
+    arr: Array<MeshAssetTask>;
+    saveAll?: boolean = false;
+    constructor(scene: Scene, arr: Array<MeshAssetTask>, saveAll?: boolean) {
         this.scene = scene;
         this.arr = arr;
+        this.saveAll = saveAll;
 
         this.createUploadButton();
-        this.uploadModel(scene, arr);
+        this.uploadModel(scene, arr, saveAll);
     }
     createUploadButton() {
         let wrapper = document.getElementById("nl-wrapper");
@@ -25,7 +29,7 @@ export class NiceLoader {
             wrapper.style.width = "300px";
             wrapper.style.left = "15px";
             wrapper.style.border = "1px solid teal";
-            wrapper.style.padding = "2px";
+            wrapper.style.padding = "4px";
             document.body.appendChild(wrapper);
         }
 
@@ -33,6 +37,7 @@ export class NiceLoader {
         if (!container) {
             container = document.createElement("div");
             container.setAttribute("id", "nl-container");
+            container.style.padding = "4px";
             wrapper.appendChild(container);
         }
 
@@ -54,17 +59,36 @@ export class NiceLoader {
             deleteButton.style.display = "none";
             wrapper.appendChild(deleteButton);
         }
+        let exportButton = document.getElementById("exportButton");
+        if (!exportButton) {
+            exportButton = document.createElement("button");
+            exportButton.setAttribute("id", "exportButton");
+            exportButton.style.float = "left";
+
+            exportButton.innerText = "EXPORT";
+            exportButton.style.display = "none";
+            container.appendChild(exportButton);
+        }
     }
-    uploadModel(scene: Scene, arr: Array<{}>) {
+    uploadModel(
+        scene: Scene,
+        arr: Array<MeshAssetTask>,
+        saveAllScene?: boolean
+    ) {
         let assetsManager = new AssetsManager(scene);
         let root: any;
         let modelsArray = arr;
+        let saveAll = saveAllScene;
 
-        assetsManager.onTaskSuccessObservable.add(function (task) {
-            root = (task as MeshAssetTask).loadedMeshes[0]; //will hold the mesh that has been loaded recently\
+        const tempNodes = scene.getNodes();
+
+        console.log("tempNodes", tempNodes);
+
+        assetsManager.onTaskSuccessObservable.add(function (task: any) {
+            root = task.loadedMeshes[0]; //will hold the mesh that has been loaded recently\
             root.name = task.name;
             console.log("task successful", task);
-            (task as MeshAssetTask).loadedMeshes.forEach((element) => {
+            task.loadedMeshes.forEach((element) => {
                 element.checkCollisions = true;
             });
             modelsArray.push(task);
@@ -77,7 +101,8 @@ export class NiceLoader {
                 enablePopup: false,
             });
             scene.debugLayer.select(root);
-            document.getElementById("deleteButton").style.display = "initial";
+            document.getElementById("deleteButton")!.style.display = "initial";
+            document.getElementById("exportButton")!.style.display = "initial";
         });
 
         assetsManager.onTaskErrorObservable.add(function (task) {
@@ -103,16 +128,52 @@ export class NiceLoader {
 
         // DELETE ALL
         document.getElementById("deleteButton")!.onclick = function (e) {
-            modelsArray.forEach((element: any) => {
+            modelsArray.forEach((element: MeshAssetTask) => {
                 element.loadedMeshes[0].dispose(false, true);
+                element.loadedAnimationGroups.forEach((a) => {
+                    a.dispose();
+                });
+                element.loadedSkeletons.forEach((a) => {
+                    a.dispose();
+                });
             });
 
             modelsArray = [];
 
             (document.getElementById("loadFile") as HTMLInputElement).value =
-                null;
+                "";
             loadButton!.innerHTML = "";
-            document.getElementById("deleteButton").style.display = "none";
+            document.getElementById("deleteButton")!.style.display = "none";
+            document.getElementById("exportButton")!.style.display = "none";
+        };
+
+        // EXPORT
+        document.getElementById("exportButton")!.onclick = function (e) {
+            let options = {
+                shouldExportNode: function (node: any) {
+                    if (!saveAll) {
+                        if (!(tempNodes as any).includes(node)) {
+                            return node;
+                        }
+                    } else {
+                        return node;
+                    }
+                },
+            };
+
+            console.log(modelsArray);
+            let exportFileName: string = "";
+            modelsArray.forEach((m) => {
+                exportFileName += m.name.slice(0, 6) + "-";
+            });
+
+            exportFileName = "NL-" + exportFileName.slice(0, -1);
+
+            console.log("EXPORT " + exportFileName);
+
+            GLTF2Export.GLBAsync(scene, exportFileName, options).then((glb) => {
+                glb.downloadFiles();
+            });
         };
     }
 }

@@ -1,10 +1,5 @@
 import { Engine } from "@babylonjs/core/Engines";
 import { Scene } from "@babylonjs/core/scene";
-import { ArcRotateCamera } from "@babylonjs/core/Cameras";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { Tools } from "@babylonjs/core/Misc/tools";
-import { HemisphericLight } from "@babylonjs/core/Lights";
-import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { createScene } from "./CreateScene";
 
 import "@babylonjs/loaders/glTF";
