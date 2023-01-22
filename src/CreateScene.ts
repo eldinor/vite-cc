@@ -44,14 +44,15 @@ export function createScene(engine: Engine, canvas: HTMLCanvasElement) {
         "",
         "https://raw.githubusercontent.com/eldinor/ForBJS/master/level5.glb"
     );
-    /*
+
     res.then((container) => {
         console.log(container);
+
         new NiceLoader(scene, modelsArray, false);
     });
-*/
+
     //
-    new NiceLoader(scene, modelsArray, false);
+    //   new NiceLoader(scene, modelsArray, false);
     //
     return scene;
 }

@@ -5,7 +5,6 @@ import {
     Scene,
 } from "@babylonjs/core";
 import { GLTF2Export } from "@babylonjs/serializers/glTF";
-import { Observable } from "babylonjs";
 
 export class NiceLoader {
     scene: Scene;
@@ -55,7 +54,7 @@ export class NiceLoader {
             deleteButton = document.createElement("button");
             deleteButton.setAttribute("id", "deleteButton");
             deleteButton.style.float = "right";
-            deleteButton.innerText = "DELETE ALL";
+            deleteButton.innerText = "Delete Imported";
             deleteButton.style.display = "none";
             wrapper.appendChild(deleteButton);
         }
@@ -69,6 +68,19 @@ export class NiceLoader {
             exportButton.style.display = "none";
             container.appendChild(exportButton);
         }
+        let checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.name = "name";
+        checkbox.value = "value";
+        checkbox.id = "saveAll";
+
+        let label = document.createElement("label");
+        label.htmlFor = "id";
+        label.style.color = "teal";
+        label.appendChild(document.createTextNode("Save All"));
+
+        wrapper.appendChild(checkbox);
+        wrapper.appendChild(label);
     }
     uploadModel(
         scene: Scene,
@@ -115,6 +127,10 @@ export class NiceLoader {
 
         const loadButton = document.getElementById("loadFile");
 
+        console.log(
+            (document.getElementById("saveAll") as HTMLInputElement).checked
+        );
+
         loadButton!.onchange = function (evt) {
             let files: any = (evt.target as HTMLInputElement)!.files;
             let filename = files[0].name;
@@ -127,7 +143,7 @@ export class NiceLoader {
         };
 
         // DELETE ALL
-        document.getElementById("deleteButton")!.onclick = function (e) {
+        document.getElementById("deleteButton")!.onclick = function (_e) {
             modelsArray.forEach((element: MeshAssetTask) => {
                 element.loadedMeshes[0].dispose(false, true);
                 element.loadedAnimationGroups.forEach((a) => {
@@ -148,7 +164,14 @@ export class NiceLoader {
         };
 
         // EXPORT
-        document.getElementById("exportButton")!.onclick = function (e) {
+        document.getElementById("exportButton")!.onclick = function (_e) {
+            console.log(
+                (document.getElementById("saveAll") as HTMLInputElement).checked
+            );
+
+            let saveAll = (
+                document.getElementById("saveAll") as HTMLInputElement
+            ).checked;
             let options = {
                 shouldExportNode: function (node: any) {
                     if (!saveAll) {
