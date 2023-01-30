@@ -42,13 +42,14 @@ export function createScene(engine: Engine, canvas: HTMLCanvasElement) {
 
     const res = SceneLoader.ImportMeshAsync(
         "",
-        "https://raw.githubusercontent.com/eldinor/ForBJS/master/level5.glb"
+        "https://raw.githubusercontent.com/eldinor/ForBJS/master/walls.glb"
     );
 
     res.then((container) => {
         console.log(container);
 
-        new NiceLoader(scene, modelsArray, false);
+        new NiceLoader(scene, modelsArray);
+        camera.radius = 125;
     });
 
     //

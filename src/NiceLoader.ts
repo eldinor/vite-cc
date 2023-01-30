@@ -9,14 +9,13 @@ import { GLTF2Export } from "@babylonjs/serializers/glTF";
 export class NiceLoader {
     scene: Scene;
     arr: Array<MeshAssetTask>;
-    saveAll?: boolean = false;
-    constructor(scene: Scene, arr: Array<MeshAssetTask>, saveAll?: boolean) {
+
+    constructor(scene: Scene, arr: Array<MeshAssetTask>) {
         this.scene = scene;
         this.arr = arr;
-        this.saveAll = saveAll;
 
         this.createUploadButton();
-        this.uploadModel(scene, arr, saveAll);
+        this.uploadModel(scene, arr);
     }
     createUploadButton() {
         let wrapper = document.getElementById("nl-wrapper");
@@ -25,7 +24,7 @@ export class NiceLoader {
             wrapper.setAttribute("id", "nl-wrapper");
             wrapper.style.position = "absolute";
             wrapper.style.top = "15px";
-            wrapper.style.width = "300px";
+            wrapper.style.width = "400px";
             wrapper.style.left = "15px";
             wrapper.style.border = "1px solid teal";
             wrapper.style.padding = "4px";
@@ -66,31 +65,29 @@ export class NiceLoader {
 
             exportButton.innerText = "EXPORT";
             exportButton.style.display = "none";
-            container.appendChild(exportButton);
+            wrapper.appendChild(exportButton);
         }
         let checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.name = "name";
+        checkbox.name = "saveAll";
         checkbox.value = "value";
         checkbox.id = "saveAll";
+        checkbox.style.display = "none";
 
         let label = document.createElement("label");
-        label.htmlFor = "id";
+        label.htmlFor = "saveAll";
         label.style.color = "teal";
+        label.style.display = "none";
+        label.id = "saveAllLabel";
         label.appendChild(document.createTextNode("Save All"));
 
         wrapper.appendChild(checkbox);
         wrapper.appendChild(label);
     }
-    uploadModel(
-        scene: Scene,
-        arr: Array<MeshAssetTask>,
-        saveAllScene?: boolean
-    ) {
+    uploadModel(scene: Scene, arr: Array<MeshAssetTask>) {
         let assetsManager = new AssetsManager(scene);
         let root: any;
         let modelsArray = arr;
-        let saveAll = saveAllScene;
 
         const tempNodes = scene.getNodes();
 
@@ -113,8 +110,12 @@ export class NiceLoader {
                 enablePopup: false,
             });
             scene.debugLayer.select(root);
+
             document.getElementById("deleteButton")!.style.display = "initial";
             document.getElementById("exportButton")!.style.display = "initial";
+
+            document.getElementById("saveAll")!.style.display = "initial";
+            document.getElementById("saveAllLabel")!.style.display = "initial";
         });
 
         assetsManager.onTaskErrorObservable.add(function (task) {
@@ -127,14 +128,16 @@ export class NiceLoader {
 
         const loadButton = document.getElementById("loadFile");
 
-        console.log(
-            (document.getElementById("saveAll") as HTMLInputElement).checked
-        );
-
         loadButton!.onchange = function (evt) {
             let files: any = (evt.target as HTMLInputElement)!.files;
             let filename = files[0].name;
             let blob = new Blob([files[0]]);
+
+            console.log(files[0].size);
+
+            let sizeInMB = (files[0].size / (1024 * 1024)).toFixed(2);
+
+            console.log(sizeInMB + " MB");
 
             FilesInput.FilesToLoad[filename.toLowerCase()] = blob as File;
 
@@ -146,9 +149,11 @@ export class NiceLoader {
         document.getElementById("deleteButton")!.onclick = function (_e) {
             modelsArray.forEach((element: MeshAssetTask) => {
                 element.loadedMeshes[0].dispose(false, true);
+
                 element.loadedAnimationGroups.forEach((a) => {
                     a.dispose();
                 });
+
                 element.loadedSkeletons.forEach((a) => {
                     a.dispose();
                 });
@@ -159,8 +164,12 @@ export class NiceLoader {
             (document.getElementById("loadFile") as HTMLInputElement).value =
                 "";
             loadButton!.innerHTML = "";
+
             document.getElementById("deleteButton")!.style.display = "none";
             document.getElementById("exportButton")!.style.display = "none";
+
+            document.getElementById("saveAll")!.style.display = "none";
+            document.getElementById("saveAllLabel")!.style.display = "none";
         };
 
         // EXPORT
@@ -172,6 +181,7 @@ export class NiceLoader {
             let saveAll = (
                 document.getElementById("saveAll") as HTMLInputElement
             ).checked;
+
             let options = {
                 shouldExportNode: function (node: any) {
                     if (!saveAll) {
@@ -185,7 +195,9 @@ export class NiceLoader {
             };
 
             console.log(modelsArray);
+
             let exportFileName: string = "";
+
             modelsArray.forEach((m) => {
                 exportFileName += m.name.slice(0, 6) + "-";
             });
